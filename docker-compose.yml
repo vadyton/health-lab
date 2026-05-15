@@ -1,6 +1,6 @@
 services:
   app:
-    build: .
+    image: ${DOCKERHUB_USERNAME}/health-lab:latest
     platform: linux/arm64
     ports:
       - "${PORT:-3001}:3001"
