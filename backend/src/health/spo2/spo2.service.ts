@@ -46,10 +46,13 @@ export class Spo2Service {
     onProgress?: (done: number, total: number) => void,
   ): Promise<number> {
     if (!samples.length) return 0;
+    const deduped = Array.from(
+      samples.reduce((m, s) => m.set(s.ts.getTime(), s), new Map<number, typeof samples[0]>()).values()
+    );
     const CHUNK = 1000;
     let done = 0;
-    for (let i = 0; i < samples.length; i += CHUNK) {
-      const chunk = samples.slice(i, i + CHUNK);
+    for (let i = 0; i < deduped.length; i += CHUNK) {
+      const chunk = deduped.slice(i, i + CHUNK);
       await this.prisma.$executeRaw`
         INSERT INTO "Spo2" ("userId", "ts", "value")
         SELECT * FROM UNNEST(
@@ -60,7 +63,7 @@ export class Spo2Service {
         ON CONFLICT ("userId", "ts") DO NOTHING
       `;
       done += chunk.length;
-      onProgress?.(done, samples.length);
+      onProgress?.(done, deduped.length);
     }
     return done;
   }

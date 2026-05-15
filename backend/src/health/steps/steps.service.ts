@@ -92,10 +92,13 @@ export class StepsService {
     source?: string,
   ): Promise<number> {
     if (!samples.length) return 0;
+    const deduped = Array.from(
+      samples.reduce((m, s) => m.set(s.ts.getTime(), s), new Map<number, typeof samples[0]>()).values()
+    );
     const CHUNK = 1000;
     let done = 0;
-    for (let i = 0; i < samples.length; i += CHUNK) {
-      const chunk = samples.slice(i, i + CHUNK);
+    for (let i = 0; i < deduped.length; i += CHUNK) {
+      const chunk = deduped.slice(i, i + CHUNK);
       await this.prisma.$executeRaw`
         INSERT INTO "Step" ("userId", "ts", "steps", "distanceM", "calories", "source")
         SELECT * FROM UNNEST(
@@ -110,7 +113,7 @@ export class StepsService {
           "source" = COALESCE(EXCLUDED."source", "Step"."source")
       `;
       done += chunk.length;
-      onProgress?.(done, samples.length);
+      onProgress?.(done, deduped.length);
     }
     return done;
   }
