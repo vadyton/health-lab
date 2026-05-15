@@ -1,24 +1,26 @@
 # ── Stage 1: Build frontend ───────────────────────────────────────────────────
-FROM node:22-alpine AS frontend-build
+# $BUILDPLATFORM = архитектура машины-сборщика (ARM64 на нашем runner-е).
+# Компиляция всегда идёт нативно, без эмуляции.
+FROM --platform=$BUILDPLATFORM node:22-alpine AS frontend-build
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm ci
 COPY frontend/ ./
 RUN npm run build
 
-# ── Stage 2: Build backend ────────────────────────────────────────────────────
-FROM node:22-alpine AS backend-build
+# ── Stage 2: Build backend (TypeScript → JS) ──────────────────────────────────
+FROM --platform=$BUILDPLATFORM node:22-alpine AS backend-build
 WORKDIR /app/backend
-# bcrypt and better-sqlite3 require native compilation
 RUN apk add --no-cache python3 make g++
 COPY backend/package*.json ./
 RUN npm ci
 COPY backend/ ./
 RUN npm run build
-# Generate Prisma client (dummy URL satisfies prisma.config.ts validation)
+# Dummy URL нужен только чтобы prisma.config.ts не упал с "DATABASE_URL is not set"
 RUN DATABASE_URL="postgresql://x:x@localhost/x" npx prisma generate
 
 # ── Stage 3: Production image ─────────────────────────────────────────────────
+# Финальный образ без --platform: наследует целевую платформу (linux/arm64).
 FROM node:22-alpine AS production
 WORKDIR /app/backend
 
@@ -27,16 +29,16 @@ COPY backend/package*.json ./
 RUN npm ci --omit=dev
 RUN apk del --purge python3 make g++
 
-# Compiled backend
+# Скомпилированный бэкенд
 COPY --from=backend-build /app/backend/dist ./dist
-# Generated Prisma engine binaries (produced by prisma generate in build stage)
+# Prisma-клиент (engine-бинарники под ARM64, сгенерированные на ARM64-runner-е)
 COPY --from=backend-build /app/backend/node_modules/.prisma ./node_modules/.prisma
 
-# Prisma schema + migrations for runtime migrate deploy
+# Схема и миграции для runtime-деплоя
 COPY backend/prisma ./prisma
 COPY backend/prisma.config.ts ./
 
-# Built frontend — served as static files by the backend
+# Фронтенд — отдаётся бэкендом как статика
 COPY --from=frontend-build /app/frontend/dist /app/frontend/dist
 
 COPY docker-entrypoint.sh /entrypoint.sh
