@@ -15,9 +15,9 @@ RUN apk add --no-cache python3 make g++
 COPY backend/package*.json ./
 RUN npm ci
 COPY backend/ ./
-RUN npm run build
-# Dummy URL нужен только чтобы prisma.config.ts не упал с "DATABASE_URL is not set"
+# Сначала генерируем Prisma-клиент — TypeScript должен видеть его типы при компиляции
 RUN DATABASE_URL="postgresql://x:x@localhost/x" npx prisma generate
+RUN npm run build
 
 # ── Stage 3: Production image ─────────────────────────────────────────────────
 # Финальный образ без --platform: наследует целевую платформу (linux/arm64).
