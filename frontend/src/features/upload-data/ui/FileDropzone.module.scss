@@ -1,0 +1,20 @@
+.wrapper {}
+.zone {
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius);
+  padding: 40px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  background: var(--color-bg);
+  position: relative;
+}
+.zone:hover, .zone.dragging { border-color: var(--color-accent); background: var(--color-accent-light); }
+.zone.done { border-color: #38a169; background: #f0fff4; }
+.zone.error { border-color: var(--color-error); background: #fff5f5; }
+
+.input { display: none; }
+.icon { font-size: 36px; margin-bottom: var(--sp-3); }
+.hint { font-size: 14px; color: var(--color-muted); line-height: 1.6; }
+.msgDone { color: #276749; font-weight: 500; }
+.msgErr { color: var(--color-error); font-weight: 500; }

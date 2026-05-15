@@ -1,0 +1,26 @@
+.root { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.hidden { display: none; }
+
+.btn {
+  padding: 8px 16px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  color: var(--color-muted);
+  font-size: 13px; cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.btn:hover { border-color: var(--color-accent); color: var(--color-accent); }
+
+.btnReopen {
+  padding: 8px 16px;
+  border: 1px solid #bfdbfe;
+  border-radius: var(--radius);
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+  font-size: 13px; font-weight: 500; cursor: pointer;
+}
+.btnReopen:hover { background: #dbeafe; }
+
+.status { font-size: 13px; color: var(--color-muted); }
+.error  { font-size: 12px; color: var(--color-error); }

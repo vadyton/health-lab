@@ -1,0 +1,24 @@
+.stageBar { display: flex; flex-direction: column; gap: 6px; }
+.timeRow { display: flex; justify-content: space-between; font-size: 11px; color: var(--color-muted); }
+.bar { display: flex; height: 24px; border-radius: 4px; overflow: hidden; }
+.segment { height: 100%; min-width: 1px; }
+.legend { display: flex; gap: var(--sp-3); flex-wrap: wrap; }
+.legendItem { display: flex; align-items: center; gap: var(--sp-1); font-size: 12px; color: var(--color-muted); }
+.legendDot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+.noStages { font-size: 13px; color: var(--color-muted); text-align: center; padding: var(--sp-2); }
+
+.durationBar { display: flex; height: 20px; border-radius: 4px; overflow: hidden; gap: 2px; }
+.durationRow {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: white;
+  font-weight: 600;
+  border-radius: 3px;
+  min-width: 0;
+  overflow: hidden;
+  transition: width .3s;
+}

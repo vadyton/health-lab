@@ -1,0 +1,38 @@
+.passwordRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.passwordLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+.passwordInput {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 13px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: monospace;
+  letter-spacing: 0.05em;
+  transition: border-color .15s;
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-accent);
+  }
+
+  &::placeholder {
+    font-family: inherit;
+    letter-spacing: 0;
+    color: var(--color-muted);
+    opacity: 0.6;
+  }
+}

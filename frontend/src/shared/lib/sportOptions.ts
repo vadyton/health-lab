@@ -1,0 +1,78 @@
+export interface SportOption {
+  id: string;
+  label: string;   // Russian
+  en: string;      // English (used in filenames and Garmin)
+  icon: string;
+}
+
+export const SPORT_OPTIONS: SportOption[] = [
+  { id: "outdoor_run",           label: "Бег (улица)",           en: "Running",             icon: "🏃" },
+  { id: "indoor_run",            label: "Бег (дорожка)",         en: "Treadmill Run",       icon: "🏃" },
+  { id: "not_outdoor_run_class", label: "Бег (беговая дорожка)", en: "Treadmill Run",       icon: "🏃" },
+  { id: "outdoor_walking",       label: "Ходьба (улица)",        en: "Walking",             icon: "🚶" },
+  { id: "walking",               label: "Ходьба",                en: "Walking",             icon: "🚶" },
+  { id: "cycling",               label: "Велосипед",             en: "Cycling",             icon: "🚴" },
+  { id: "swim",                  label: "Плавание",              en: "Swimming",            icon: "🏊" },
+  { id: "swimming",              label: "Плавание",              en: "Swimming",            icon: "🏊" },
+  { id: "tennis",                label: "Теннис",                en: "Tennis",              icon: "🎾" },
+  { id: "table_tennis",          label: "Настольный теннис",     en: "Table Tennis",        icon: "🏓" },
+  { id: "badminton",             label: "Бадминтон",             en: "Badminton",           icon: "🏸" },
+  { id: "basketball",            label: "Баскетбол",             en: "Basketball",          icon: "🏀" },
+  { id: "football",              label: "Футбол",                en: "Football",            icon: "⚽" },
+  { id: "yoga",                  label: "Йога",                  en: "Yoga",                icon: "🧘" },
+  { id: "pilates",               label: "Пилатес",               en: "Pilates",             icon: "🧘" },
+  { id: "strength_training",     label: "Силовая",               en: "Strength Training",   icon: "🏋️" },
+  { id: "upper_limb_training",   label: "Тренировка рук",        en: "Upper Body Workout",  icon: "💪" },
+  { id: "lower_limb_training",   label: "Тренировка ног",        en: "Leg Workout",         icon: "🦵" },
+  { id: "core_training",         label: "Кор",                   en: "Core Training",       icon: "🎯" },
+  { id: "hiit",                  label: "ВИИТ",                  en: "HIIT",                icon: "⚡" },
+  { id: "elliptical",            label: "Эллипсоид",             en: "Elliptical",          icon: "🔄" },
+  { id: "rowing",                label: "Гребля",                en: "Rowing",              icon: "🚣" },
+  { id: "rope_skipping",         label: "Скакалка",              en: "Jump Rope",           icon: "🪢" },
+  { id: "rope_jump",             label: "Скакалка",              en: "Jump Rope",           icon: "🪢" },
+  { id: "free_training",         label: "Свободная тренировка",  en: "Workout",             icon: "🏅" },
+  { id: "pingpong",              label: "Настольный теннис",     en: "Table Tennis",        icon: "🏓" },
+  { id: "dancing",               label: "Танцы",                 en: "Dancing",             icon: "💃" },
+  { id: "stretching",            label: "Растяжка",              en: "Stretching",          icon: "🤸" },
+  { id: "other",                 label: "Другое",                en: "Workout",             icon: "🏅" },
+  // Zepp Life specific
+  { id: "outdoor_riding",        label: "Велосипед",             en: "Cycling",             icon: "🚴" },
+  { id: "indoor_riding",         label: "Велосипед (крытый)",    en: "Indoor Cycling",      icon: "🚴" },
+  { id: "hiking",                label: "Хайкинг",               en: "Hiking",              icon: "🥾" },
+  { id: "ice_skating",           label: "Катание на коньках",    en: "Ice Skating",         icon: "⛸️" },
+  { id: "aerobics",              label: "Аэробика",              en: "Aerobics",            icon: "🏋️" },
+  { id: "gymnastics",            label: "Гимнастика",            en: "Gymnastics",          icon: "🤸" },
+  { id: "bowling",               label: "Боулинг",               en: "Bowling",             icon: "🎳" },
+  { id: "squash",                label: "Сквош",                 en: "Squash",              icon: "🎾" },
+  { id: "volleyball",            label: "Волейбол",              en: "Volleyball",          icon: "🏐" },
+  { id: "handball",              label: "Гандбол",               en: "Handball",            icon: "🤾" },
+  { id: "archery",               label: "Стрельба из лука",      en: "Archery",             icon: "🏹" },
+  { id: "boxing",                label: "Бокс",                  en: "Boxing",              icon: "🥊" },
+  { id: "tai_chi",               label: "Тай-чи",                en: "Tai Chi",             icon: "🧘" },
+  { id: "muay_thai",             label: "Муай-тай",              en: "Muay Thai",           icon: "🥊" },
+  { id: "taekwondo",             label: "Тхэквондо",             en: "Taekwondo",           icon: "🥋" },
+  { id: "martial_arts",          label: "Боевые искусства",      en: "Martial Arts",        icon: "🥋" },
+  { id: "kickboxing",            label: "Кикбоксинг",            en: "Kickboxing",          icon: "🥊" },
+  { id: "parkour",               label: "Паркур",                en: "Parkour",             icon: "🏃" },
+  { id: "cross_training",        label: "Кросс-тренинг",         en: "Cross Training",      icon: "🏋️" },
+  { id: "race_walking",          label: "Спортивная ходьба",     en: "Race Walking",        icon: "🚶" },
+  { id: "kayaking",              label: "Каяк",                  en: "Kayaking",            icon: "🛶" },
+  { id: "spinning",              label: "Спиннинг",              en: "Spinning",            icon: "🚴" },
+  { id: "skateboarding",         label: "Скейтбординг",          en: "Skateboarding",       icon: "🛹" },
+  { id: "roller_skating",        label: "Роликовые коньки",      en: "Roller Skating",      icon: "⛸️" },
+  { id: "rock_climbing",         label: "Скалолазание",          en: "Rock Climbing",       icon: "🧗" },
+  { id: "ballet",                label: "Балет",                 en: "Ballet",              icon: "🩰" },
+  { id: "curling",               label: "Кёрлинг",              en: "Curling",             icon: "🥌" },
+  { id: "bmx",                   label: "BMX",                   en: "BMX",                 icon: "🚴" },
+  { id: "stepper",               label: "Степпер",               en: "Stepper",             icon: "🏋️" },
+  { id: "flexibility",           label: "Гибкость",              en: "Flexibility",         icon: "🤸" },
+  { id: "fishing",               label: "Рыбалка",               en: "Fishing",             icon: "🎣" },
+  { id: "sailing",               label: "Парусный спорт",        en: "Sailing",             icon: "⛵" },
+  { id: "cricket",               label: "Крикет",                en: "Cricket",             icon: "🏏" },
+  { id: "baseball",              label: "Бейсбол",               en: "Baseball",            icon: "⚾" },
+  { id: "softball",              label: "Софтбол",               en: "Softball",            icon: "⚾" },
+];
+
+export function findSportOption(category: string): SportOption | undefined {
+  return SPORT_OPTIONS.find((o) => o.id === category);
+}

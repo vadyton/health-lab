@@ -1,0 +1,209 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  externalId   String?  @unique
+  username     String?  @unique
+  name         String?
+  passwordHash String?
+  createdAt    DateTime @default(now())
+
+  heartRates        HeartRate[]
+  spo2s             Spo2[]
+  steps             Step[]
+  sleeps            Sleep[]
+  activities        Activity[]
+  stresses          Stress[]
+  vitalities        Vitality[]
+  profile           Profile?
+  bodyCompositions  BodyComposition[]
+}
+
+model HeartRate {
+  id     BigInt   @id @default(autoincrement())
+  userId String   @db.Uuid
+  user   User     @relation(fields: [userId], references: [id])
+  ts     DateTime @db.Timestamptz
+  bpm    Int      @db.SmallInt
+  source String?
+
+  @@unique([userId, ts])
+  @@index([userId, ts])
+  @@index([userId, source])
+}
+
+model Spo2 {
+  id     BigInt   @id @default(autoincrement())
+  userId String   @db.Uuid
+  user   User     @relation(fields: [userId], references: [id])
+  ts     DateTime @db.Timestamptz
+  value  Int      @db.SmallInt
+
+  @@unique([userId, ts])
+  @@index([userId, ts])
+}
+
+model Step {
+  id        BigInt   @id @default(autoincrement())
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id])
+  ts        DateTime @db.Timestamptz
+  steps     Int
+  distanceM Float?
+  calories  Float?
+  source    String?
+
+  @@unique([userId, ts])
+  @@index([userId, ts])
+  @@index([userId, source])
+}
+
+model Sleep {
+  id          BigInt   @id @default(autoincrement())
+  userId      String   @db.Uuid
+  user        User     @relation(fields: [userId], references: [id])
+  bedtime     DateTime @db.Timestamptz
+  wakeUp      DateTime @db.Timestamptz
+  durationMin Int?     @db.SmallInt
+  deepMin     Int?     @db.SmallInt
+  lightMin    Int?     @db.SmallInt
+  remMin      Int?     @db.SmallInt
+  awakeMin    Int?     @db.SmallInt
+  awakeCount  Int?     @db.SmallInt
+  avgHr       Int?     @db.SmallInt
+  minHr       Int?     @db.SmallInt
+  maxHr       Int?     @db.SmallInt
+  avgSpo2     Int?     @db.SmallInt
+  minSpo2     Int?     @db.SmallInt
+  score       Int?     @db.SmallInt
+  avgBreath   Float?
+  stages      Json?
+  naps        Json?
+  source      String?
+
+  @@unique([userId, bedtime])
+  @@index([userId, bedtime])
+  @@index([userId, source])
+}
+
+model Activity {
+  id             BigInt   @id @default(autoincrement())
+  userId         String   @db.Uuid
+  user           User     @relation(fields: [userId], references: [id])
+  externalSid    String?
+  category       String
+  source         String?
+  startTs        DateTime @db.Timestamptz
+  endTs          DateTime @db.Timestamptz
+  durationS      Int?
+  calories       Int?
+  avgHr          Int?     @db.SmallInt
+  maxHr          Int?     @db.SmallInt
+  minHr          Int?     @db.SmallInt
+  distanceM      Float?
+  trainLoad      Int?
+  trainEffect    Float?
+  trainLoadLevel Int?     @db.SmallInt
+  recoverTime    Int?
+  vo2Max         Float?
+  title          String?
+  notes          String?
+  extra          Json?
+
+  hrSamples ActivityHr[]
+  gpsPoints ActivityGps[]
+
+  @@unique([userId, startTs])
+  @@index([userId, startTs])
+  @@index([userId, category])
+  @@index([userId, source])
+}
+
+model ActivityGps {
+  activityId BigInt
+  idx        Int
+  ts         Int
+  lat        Float
+  lng        Float
+  altM       Float?
+
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@id([activityId, idx])
+  @@index([activityId])
+}
+
+model ActivityHr {
+  id         BigInt   @id @default(autoincrement())
+  activityId BigInt
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  ts         DateTime @db.Timestamptz
+  bpm        Int      @db.SmallInt
+
+  @@unique([activityId, ts])
+  @@index([activityId, ts])
+}
+
+model Stress {
+  id     BigInt   @id @default(autoincrement())
+  userId String   @db.Uuid
+  user   User     @relation(fields: [userId], references: [id])
+  ts     DateTime @db.Timestamptz
+  value  Int      @db.SmallInt
+
+  @@unique([userId, ts])
+  @@index([userId, ts])
+}
+
+model Vitality {
+  id     BigInt   @id @default(autoincrement())
+  userId String   @db.Uuid
+  user   User     @relation(fields: [userId], references: [id])
+  ts     DateTime @db.Timestamptz
+  value  Float
+
+  @@unique([userId, ts])
+  @@index([userId, ts])
+}
+
+model BodyComposition {
+  id            BigInt   @id @default(autoincrement())
+  userId        String   @db.Uuid
+  user          User     @relation(fields: [userId], references: [id])
+  ts            DateTime @db.Timestamptz
+  weightKg      Float
+  heightCm      Float?
+  bmi           Float?
+  fatRate       Float?
+  bodyWaterRate Float?
+  boneMassKg    Float?
+  metabolism    Float?
+  muscleRate    Float?
+  visceralFat   Float?
+  source        String?
+
+  @@unique([userId, ts])
+  @@index([userId, ts])
+}
+
+model Profile {
+  id                    Int       @id @default(autoincrement())
+  userId                String    @unique @db.Uuid
+  user                  User      @relation(fields: [userId], references: [id])
+  gender                String?
+  dateOfBirth           DateTime? @db.Date
+  heightCm              Float?
+  weightKg              Float?
+  restingHr             Int?      @db.SmallInt
+  maxHr                 Int?      @db.SmallInt
+  walkingStepLengthCm   Float?
+  runningStrideLengthCm Float?
+  vo2Max                Float?
+  updatedAt             DateTime  @updatedAt
+}

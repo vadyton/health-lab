@@ -1,0 +1,42 @@
+# compiled output
+dist/
+node_modules/
+build/
+
+# TypeScript incremental build cache
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+
+# IDEs
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.claude/
+
+# dotenv — commit .env.example, never .env
+.env
+.env.*
+!.env.example
+
+# Temp
+.temp
+.tmp
+*.pid
+*.pid.lock
+
+# Test coverage
+coverage/
+
+# Docker local data volume (if not using named volume)
+postgres_data/

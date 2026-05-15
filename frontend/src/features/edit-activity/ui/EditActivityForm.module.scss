@@ -1,0 +1,136 @@
+.form { display: flex; flex-direction: column; gap: var(--sp-4); }
+
+.field { display: flex; flex-direction: column; gap: 5px; }
+.label {
+  font-size: 11px; font-weight: 600; color: var(--color-muted);
+  text-transform: uppercase; letter-spacing: .05em;
+}
+
+.select, .input, .textarea, .numInput {
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--color-bg);
+  color: var(--color-text);
+  transition: border-color .15s, box-shadow .15s;
+  width: 100%;
+}
+.select:focus, .input:focus, .textarea:focus, .numInput:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-light);
+}
+.select:disabled, .input:disabled, .textarea:disabled, .numInput:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+  background: var(--color-surface);
+}
+.textarea { resize: vertical; }
+
+// Hide spinners by default; show on hover / focus — avoids dark-mode background bleed
+.numInput {
+  -moz-appearance: textfield;
+
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+    opacity: 0;
+    transition: opacity .12s;
+  }
+
+  &:hover,
+  &:focus {
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+      -webkit-appearance: inner-spin-button;
+      opacity: 1;
+      border-radius: 0 calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0;
+    }
+  }
+}
+
+.originalHint {
+  font-size: 11px; color: var(--color-muted); font-style: italic;
+}
+
+// Input + unit side-by-side: unit is a flex sibling AFTER the input,
+// so spinner arrows (inside the input, on its right) never collide with the label.
+.inputWrap {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.inputWrap .numInput { flex: 1; min-width: 0; }
+.unit {
+  font-size: 11px; color: var(--color-muted);
+  white-space: nowrap; flex-shrink: 0;
+}
+
+/* Grids */
+.numGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-3);
+}
+.numGridNarrow {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--sp-3);
+}
+
+/* Sections (distance, cadence, power, etc.) */
+.section {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.sectionHead {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+}
+.sectionTitle {
+  font-size: 12px; font-weight: 700; color: var(--color-text);
+  text-transform: uppercase; letter-spacing: .06em;
+}
+.sectionHint {
+  font-size: 11px; color: var(--color-muted); font-style: italic;
+}
+.sectionDisabled {
+  opacity: .55;
+  background: var(--color-surface);
+}
+.sectionDisabled .sectionTitle { color: var(--color-muted); }
+
+.actions { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; }
+
+.btn {
+  padding: 10px 22px;
+  border: none; border-radius: var(--radius);
+  background: var(--color-accent); color: #fff;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  transition: background .15s;
+  white-space: nowrap;
+}
+.btn:hover { background: var(--color-accent-dark); }
+.btn:disabled { opacity: .65; cursor: not-allowed; }
+
+.errorMsg {
+  padding: 10px 12px;
+  background: #fff5f5; border: 1px solid #feb2b2;
+  border-radius: var(--radius); color: var(--color-error); font-size: 13px;
+}
+
+.hint { font-size: 12px; color: var(--color-muted); line-height: 1.5; }
+
+@media (max-width: 600px) {
+  .numGrid { grid-template-columns: repeat(2, 1fr); }
+  .numGridNarrow { grid-template-columns: 1fr; }
+}
+@media (max-width: 400px) {
+  .numGrid { grid-template-columns: 1fr; }
+}

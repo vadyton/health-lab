@@ -1,0 +1,40 @@
+.tabs { display: flex; gap: var(--sp-1); margin-left: auto; }
+.tab  { border-radius: var(--radius); }
+
+.insights { display: flex; gap: var(--sp-2); margin-bottom: 20px; }
+.pill { border-radius: 20px; }
+
+.legend { display: flex; gap: var(--sp-3); }
+
+.calendar {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-4);
+}
+.calHeader {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.calGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
+}
+
+.detail {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.detailStats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: var(--sp-3);
+  margin: 8px 0;
+}
+.ds { display: flex; flex-direction: column; gap: var(--sp-1); }

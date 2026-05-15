@@ -1,0 +1,100 @@
+.page { padding: var(--sp-6); max-width: 900px; margin: 0 auto; }
+.title { font-size: 22px; font-weight: 700; margin-bottom: 20px; }
+
+.controls {
+  display: flex; align-items: center; gap: var(--sp-3);
+  flex-wrap: wrap; margin-bottom: 10px;
+}
+
+.seg { display: flex; border: 1px solid var(--color-border); border-radius: var(--radius); overflow: hidden; }
+.segBtn {
+  padding: 7px 16px; border: none; background: var(--color-surface);
+  font-size: 13px; font-weight: 500; cursor: pointer; color: var(--color-muted);
+  border-right: 1px solid var(--color-border); transition: background .1s;
+}
+.segBtn:last-child { border-right: none; }
+.segBtn:hover:not(.active) { background: var(--color-bg); }
+.segBtn.active { background: var(--color-accent); color: #fff; }
+
+.dateNav { display: flex; align-items: center; gap: var(--sp-1); }
+.navBtn {
+  background: none; border: 1px solid var(--color-border); border-radius: 6px;
+  padding: 6px 12px; cursor: pointer; font-size: 16px; color: var(--color-muted);
+  transition: background .1s;
+}
+.navBtn:hover:not(:disabled) { background: var(--color-bg); }
+.navBtn:disabled { opacity: .4; cursor: not-allowed; }
+.dateInput {
+  padding: 6px 10px; border: 1px solid var(--color-border);
+  border-radius: var(--radius); font-size: 13px;
+  background: var(--color-surface); color: var(--color-text);
+}
+
+.compareBtn {
+  margin-left: auto;
+  padding: 7px 14px; border: 1px solid var(--color-border);
+  border-radius: var(--radius); background: var(--color-surface);
+  font-size: 13px; font-weight: 500; cursor: pointer; color: var(--color-muted);
+  transition: border-color .12s, color .12s, background .12s;
+}
+.compareBtn:hover { border-color: var(--color-accent); color: var(--color-accent); }
+.compareBtn.compareOn {
+  border-color: var(--color-accent); background: var(--color-accent-light);
+  color: var(--color-accent);
+}
+
+/* ── Period labels (shown when comparing) ── */
+.periodRow {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 10px 14px; margin-bottom: 10px;
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius); font-size: 13px;
+}
+.periodCurrent, .periodCompare { display: flex; align-items: center; gap: 6px; }
+.periodCompare { color: var(--color-muted); }
+.periodDot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.periodDivider { font-weight: 700; color: var(--color-muted); padding: 0 4px; }
+
+/* ── Smoothing slider ── */
+.sliderRow {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 10px 14px; margin-bottom: var(--sp-4);
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+.sliderLabel { font-size: 13px; color: var(--color-muted); white-space: nowrap; }
+.slider { flex: 1; min-width: 120px; max-width: 200px; accent-color: var(--color-accent); cursor: pointer; }
+.sliderVal { font-size: 13px; font-weight: 600; color: var(--color-accent); white-space: nowrap; min-width: 40px; }
+.densityTicks { display: flex; gap: 4px; flex-wrap: wrap; }
+.densityTick {
+  padding: 3px 8px; border: 1px solid var(--color-border); border-radius: 20px;
+  font-size: 11px; cursor: pointer; background: var(--color-surface); color: var(--color-muted);
+  transition: all .12s;
+}
+.densityTick:hover { border-color: var(--color-accent); color: var(--color-accent); }
+.densityTickActive { border-color: var(--color-accent); background: var(--color-accent-light); color: var(--color-accent); }
+
+.stats {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: var(--sp-3); margin-bottom: 20px;
+}
+
+.chartCard {
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius); padding: 16px 8px;
+  box-shadow: var(--shadow-sm); position: relative;
+}
+.noData { text-align: center; color: var(--color-muted); padding: 40px; font-size: 14px; }
+.center { display: flex; justify-content: center; padding: 60px; }
+
+/* Dims data area while fetching new date/range without hiding controls */
+.dataArea { transition: opacity 0.18s ease; }
+.dataArea.fetching { opacity: 0.45; pointer-events: none; }
+
+.spo2Section { margin-top: 20px; }
+.spo2Header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.spo2Title { font-size: 15px; font-weight: 600; color: #6b46c1; }
+.spo2Stats { display: flex; gap: var(--sp-4); font-size: 13px; color: var(--color-muted); }

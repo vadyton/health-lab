@@ -1,0 +1,25 @@
+{
+  "name": "health-lab",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
+
+    "dev": "concurrently -n backend,frontend -c cyan,magenta \"npm run backend:dev\" \"npm run frontend:dev\"",
+    "backend:dev": "cd backend && npm run start:dev",
+    "frontend:dev": "cd frontend && npm run dev",
+
+    "build": "npm run frontend:build && npm run backend:build",
+    "frontend:build": "cd frontend && npm run build",
+    "backend:build": "cd backend && npm run build",
+
+    "start": "npm run frontend:build && cd backend && npm start",
+
+    "db:migrate": "cd backend && npm run prisma:migrate",
+    "db:migrate:dev": "cd backend && npm run prisma:dev",
+    "db:generate": "cd backend && npm run prisma:generate"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

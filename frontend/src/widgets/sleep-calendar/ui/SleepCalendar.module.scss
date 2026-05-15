@@ -1,0 +1,20 @@
+/* Quality classes injected into MonthCalendar day buttons */
+.good { background: rgba(74, 222, 128, 0.15); }
+.ok   { background: rgba(234, 179, 8, 0.14); }
+.poor { background: rgba(239, 68, 68, 0.14); }
+
+.good:not(:disabled):hover { background: rgba(74, 222, 128, 0.30); }
+.ok:not(:disabled):hover   { background: rgba(234, 179, 8, 0.28); }
+.poor:not(:disabled):hover { background: rgba(239, 68, 68, 0.28); }
+
+.dur { font-size: 9px; color: var(--color-muted); line-height: 1; }
+
+.legend {
+  display: flex; gap: var(--sp-3); margin-top: 10px;
+  justify-content: center;
+}
+.legendItem { display: flex; align-items: center; gap: var(--sp-1); font-size: 11px; color: var(--color-muted); }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; font-style: normal; }
+.dot.good { background: rgba(74, 222, 128, 0.4); }
+.dot.ok   { background: rgba(234, 179, 8, 0.4); }
+.dot.poor { background: rgba(239, 68, 68, 0.4); }

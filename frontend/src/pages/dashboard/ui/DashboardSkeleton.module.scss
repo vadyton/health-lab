@@ -1,0 +1,27 @@
+.pill { border-radius: 20px; }
+
+.calendar {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-4);
+}
+.calendarHeader {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.calendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
+}
+
+.list { display: flex; flex-direction: column; gap: var(--sp-1); }
+.listItem {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: 14px 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+.listItemContent { flex: 1; display: flex; flex-direction: column; gap: 6px; }
