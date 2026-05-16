@@ -44,5 +44,5 @@ COPY --from=frontend-build /app/frontend/dist /app/frontend/dist
 COPY docker-entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-EXPOSE 3001
+EXPOSE 3333
 ENTRYPOINT ["/entrypoint.sh"]
