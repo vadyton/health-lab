@@ -1,6 +1,8 @@
+import { useState, useRef, useEffect } from "react";
 import { observer } from "mobx-react-lite";
 import { useStore } from "@/shared/stores/StoreContext";
 import { useBody } from "@/entities/body/api/queries";
+import type { BodySample } from "@/entities/body/model/types";
 import { BodyChart } from "@/widgets/body-chart/ui/BodyChart";
 import { StatCard } from "@/shared/ui/StatCard";
 import s from "./BodyPage.module.scss";
@@ -30,6 +32,97 @@ const CHARTS: {
 function fmt(v: number | null | undefined, decimals = 1): string {
   if (v == null) return "—";
   return v.toFixed(decimals);
+}
+
+function col(v: number | null | undefined, decimals = 1): string {
+  return v != null ? v.toFixed(decimals) : "";
+}
+
+function downloadCsv(content: string, filename: string, bom = true) {
+  const blob = new Blob([bom ? "﻿" + content : content], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportFullCsv(samples: BodySample[]) {
+  const header = ["Дата", "Время", "Вес (кг)", "ИМТ", "Жир (%)", "Мышцы (%)", "Вода (%)", "Кости (кг)", "Метаболизм (ккал)", "Висцеральный жир"];
+  const rows = [[...header]];
+  for (const sample of [...samples].sort((a, b) => a.time - b.time)) {
+    const d = new Date(sample.time * 1000);
+    const date = d.toLocaleDateString("ru-RU");
+    const time = d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    rows.push([
+      date, time,
+      col(sample.weightKg),
+      col(sample.bmi),
+      col(sample.fatRate),
+      col(sample.muscleRate),
+      col(sample.bodyWaterRate),
+      col(sample.boneMassKg),
+      col(sample.metabolism, 0),
+      col(sample.visceralFat),
+    ]);
+  }
+  downloadCsv(rows.map(r => r.join(";")).join("\n"), "body.csv");
+}
+
+function exportFitbitCsv(samples: BodySample[]) {
+  const header = "Date,Weight,BMI,Fat";
+  const rows = [header];
+  for (const sample of [...samples].sort((a, b) => a.time - b.time)) {
+    const d = new Date(sample.time * 1000);
+    const date   = d.toISOString().slice(0, 10);
+    const weight = sample.weightKg.toFixed(1);
+    const bmi    = sample.bmi     != null ? sample.bmi.toFixed(1)     : "0.0";
+    const fat    = sample.fatRate != null ? sample.fatRate.toFixed(1) : "0.0";
+    rows.push(`"${date}","${weight}","${bmi}","${fat}"`);
+  }
+  // No BOM — Garmin's parser doesn't handle it well
+  downloadCsv("Body\n" + rows.join("\n"), "body_fitbit.csv", false);
+}
+
+function ExportMenu({ samples }: { samples: BodySample[] }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handle = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handle);
+    return () => document.removeEventListener("mousedown", handle);
+  }, [open]);
+
+  return (
+    <div className={s.exportWrap} ref={ref}>
+      <button className={s.exportBtn} onClick={() => setOpen(o => !o)}>
+        Экспорт <span className={s.caret}>{open ? "▲" : "▼"}</span>
+      </button>
+      {open && (
+        <div className={s.exportMenu}>
+          <button
+            className={s.exportItem}
+            onClick={() => { exportFullCsv(samples); setOpen(false); }}
+          >
+            <span className={s.exportItemTitle}>CSV — все данные</span>
+            <span className={s.exportItemDesc}>Вес, ИМТ, жир, мышцы, вода, кости…</span>
+          </button>
+          <button
+            className={s.exportItem}
+            onClick={() => { exportFitbitCsv(samples); setOpen(false); }}
+          >
+            <span className={s.exportItemTitle}>Fitbit CSV — для Garmin</span>
+            <span className={s.exportItemDesc}>Формат совместимый с импортом в Garmin Connect</span>
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export const BodyPage = observer(() => {
@@ -65,6 +158,8 @@ export const BodyPage = observer(() => {
             </button>
           ))}
         </div>
+
+        {samples.length > 0 && <ExportMenu samples={samples} />}
 
         {store.range !== "all" && (
           <div className={s.dateNav}>
