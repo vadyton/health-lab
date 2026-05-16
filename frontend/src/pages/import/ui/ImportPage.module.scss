@@ -1,4 +1,10 @@
-.page { padding: var(--sp-6); max-width: 720px; margin: 0 auto; }
+.page { padding: var(--sp-6); max-width: 720px; margin: 0 auto; width: 100%; }
+
+@media (max-width: 600px) {
+  .page { padding: var(--sp-4); }
+  .sourceSeg { display: flex; flex-wrap: wrap; width: 100%; }
+  .sourceBtn { flex: 1; min-width: 0; padding: 7px 10px; font-size: 13px; }
+}
 .title { font-size: 22px; font-weight: 700; margin-bottom: 20px; }
 
 .sourceSeg {

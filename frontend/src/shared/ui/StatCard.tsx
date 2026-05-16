@@ -12,8 +12,8 @@ interface Props {
 
 function autoSpan(value: string | number, unit?: string): 1 | 2 | 3 {
   const len = String(value).length + (unit ? unit.length + 1 : 0);
-  if (len > 18) return 3;
-  if (len > 10) return 2;
+  if (len > 14) return 3;
+  if (len > 8) return 2;
   return 1;
 }
 

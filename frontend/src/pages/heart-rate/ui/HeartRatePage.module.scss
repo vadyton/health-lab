@@ -1,4 +1,4 @@
-.page { padding: var(--sp-6); max-width: 900px; margin: 0 auto; }
+.page { padding: var(--sp-6); max-width: 900px; margin: 0 auto; width: 100%; }
 .title { font-size: 22px; font-weight: 700; margin-bottom: 20px; }
 
 .controls {
@@ -83,6 +83,8 @@
   background: var(--color-surface); border: 1px solid var(--color-border);
   border-radius: var(--radius); padding: 16px 8px;
   box-shadow: var(--shadow-sm); position: relative;
+  overflow: hidden;
+  min-width: 0;
 }
 .noData { text-align: center; color: var(--color-muted); padding: 40px; font-size: 14px; }
 .center { display: flex; justify-content: center; padding: 60px; }
@@ -92,6 +94,13 @@
 .dataArea.fetching { opacity: 0.45; pointer-events: none; }
 
 .spo2Section { margin-top: 20px; }
+
+@media (max-width: 600px) {
+  .page { padding: var(--sp-4); }
+  .controls { gap: var(--sp-2); }
+  .compareBtn { margin-left: 0; }
+  .stats { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+}
 .spo2Header {
   display: flex; align-items: center; justify-content: space-between;
   margin-bottom: 10px;
