@@ -4,6 +4,16 @@ export interface SleepStage {
   state: "light" | "deep" | "rem" | "awake";
 }
 
+export interface Nap {
+  start: number;
+  end: number;
+  durationMin?: number;
+  deepMin?: number;
+  lightMin?: number;
+  remMin?: number;
+  awakeMin?: number;
+}
+
 export interface SleepSummary {
   id: string;
   bedtime: number;
@@ -24,4 +34,5 @@ export interface SleepRecord extends SleepSummary {
   awakeCount?: number;
   avgBreath?: number;
   stages?: SleepStage[];
+  naps?: Nap[];
 }

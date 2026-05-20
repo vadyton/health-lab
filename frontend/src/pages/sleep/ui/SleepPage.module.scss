@@ -108,6 +108,28 @@
 .dsLabel { font-size: 11px; color: var(--color-muted); text-transform: uppercase; letter-spacing: .03em; }
 .stages { margin-top: 4px; }
 .stagesTitle { font-size: 14px; font-weight: 600; margin-bottom: 10px; }
+
+.napSection {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-border);
+}
+.napItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+.napTime { color: var(--color-muted); }
+.napDur  { font-weight: 600; }
+.napPhases {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
 .detailSpinner { padding: 40px; display: flex; justify-content: center; }
 .emptyDetail { padding: 40px; text-align: center; color: var(--color-muted); font-size: 14px; }
 

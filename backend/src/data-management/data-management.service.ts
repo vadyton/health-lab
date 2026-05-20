@@ -32,13 +32,15 @@ export class DataManagementService {
     return result;
   }
 
-  async deleteBySource(userId: string, source: DataSource): Promise<Record<string, number>> {
+  async deleteBySource(userId: string, source: DataSource, types?: string[]): Promise<Record<string, number>> {
+    const all = !types?.length;
+    const has = (t: string) => all || types!.includes(t);
     const [hr, steps, sleep, activities, body] = await Promise.all([
-      this.prisma.heartRate.deleteMany({ where: { userId, source } }),
-      this.prisma.step.deleteMany({ where: { userId, source } }),
-      this.prisma.sleep.deleteMany({ where: { userId, source } }),
-      this.prisma.activity.deleteMany({ where: { userId, source } }),
-      this.prisma.bodyComposition.deleteMany({ where: { userId, source } }),
+      has("heartRate")  ? this.prisma.heartRate.deleteMany({ where: { userId, source } })         : { count: 0 },
+      has("steps")      ? this.prisma.step.deleteMany({ where: { userId, source } })               : { count: 0 },
+      has("sleep")      ? this.prisma.sleep.deleteMany({ where: { userId, source } })              : { count: 0 },
+      has("activities") ? this.prisma.activity.deleteMany({ where: { userId, source } })           : { count: 0 },
+      has("body")       ? this.prisma.bodyComposition.deleteMany({ where: { userId, source } })    : { count: 0 },
     ]);
     return {
       heartRate:  hr.count,

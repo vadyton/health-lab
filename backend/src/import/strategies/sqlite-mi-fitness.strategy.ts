@@ -65,6 +65,29 @@ interface SportJson {
 
 const STATE_MAP: Record<number, string> = { 2: "light", 3: "deep", 4: "rem", 5: "awake" };
 
+const NAP_MAX_MIN = 180;
+
+interface NapEntry {
+  start: number;
+  end: number;
+  durationMin?: number;
+  deepMin?: number;
+  lightMin?: number;
+  remMin?: number;
+  awakeMin?: number;
+  stages?: { start: number; end: number; state: string }[];
+}
+
+type SleepRec = {
+  bedtime: Date; wakeUp: Date;
+  durationMin?: number; deepMin?: number; lightMin?: number;
+  remMin?: number; awakeMin?: number; awakeCount?: number;
+  avgHr?: number; minHr?: number; maxHr?: number;
+  score?: number; avgBreath?: number;
+  stages?: { start: number; end: number; state: string }[];
+  naps?: NapEntry[];
+};
+
 export class SqliteMiFitnessStrategy {
   constructor(
     private readonly heartRateService: HeartRateService,
@@ -79,14 +102,14 @@ export class SqliteMiFitnessStrategy {
     const stats: Record<string, number> = {};
 
     try {
-      // Fetch existing max timestamps to skip already-imported records
-      const maxTs = await this.activitiesService.getImportMaxTimestamps(userId);
-
-      stats.heartRate  = await this.importHeartRate(db, userId, onProgress, maxTs.heartRate);
-      stats.spo2       = await this.importSpo2(db, userId, onProgress, maxTs.spo2);
-      stats.steps      = await this.importSteps(db, userId, onProgress, maxTs.steps);
-      stats.sleep      = await this.importSleep(db, userId, onProgress, maxTs.sleep);
-      stats.activities = await this.importActivities(db, userId, onProgress, maxTs.activities);
+      // No timestamp pre-filtering: always upsert all records so historical
+      // backfills (gaps filled in a newer export) are never skipped.
+      // Deduplication is handled by unique constraints in the DB via upsert.
+      stats.heartRate  = await this.importHeartRate(db, userId, onProgress);
+      stats.spo2       = await this.importSpo2(db, userId, onProgress);
+      stats.steps      = await this.importSteps(db, userId, onProgress);
+      stats.sleep      = await this.importSleep(db, userId, onProgress);
+      stats.activities = await this.importActivities(db, userId, onProgress);
       stats.activityHr = await this.activitiesService.linkHeartRateFromGlobal(userId);
     } finally {
       db.close();
@@ -95,12 +118,10 @@ export class SqliteMiFitnessStrategy {
     return stats;
   }
 
-  private async importHeartRate(db: Database.Database, userId: string, onProgress: ProgressCallback, afterTs?: Date): Promise<number> {
+  private async importHeartRate(db: Database.Database, userId: string, onProgress: ProgressCallback): Promise<number> {
     const rows = db.prepare(
-      afterTs
-        ? "SELECT time, value FROM heart_rate WHERE deleted=0 AND time > ? ORDER BY time"
-        : "SELECT time, value FROM heart_rate WHERE deleted=0 ORDER BY time"
-    ).all(...(afterTs ? [Math.floor(afterTs.getTime() / 1000)] : [])) as { time: number; value: string }[];
+      "SELECT time, value FROM heart_rate WHERE deleted=0 ORDER BY time"
+    ).all() as { time: number; value: string }[];
 
     const samples = rows.flatMap(r => {
       try {
@@ -118,12 +139,10 @@ export class SqliteMiFitnessStrategy {
     );
   }
 
-  private async importSpo2(db: Database.Database, userId: string, onProgress: ProgressCallback, afterTs?: Date): Promise<number> {
+  private async importSpo2(db: Database.Database, userId: string, onProgress: ProgressCallback): Promise<number> {
     const rows = db.prepare(
-      afterTs
-        ? "SELECT time, value FROM spo2 WHERE deleted=0 AND time > ? ORDER BY time"
-        : "SELECT time, value FROM spo2 WHERE deleted=0 ORDER BY time"
-    ).all(...(afterTs ? [Math.floor(afterTs.getTime() / 1000)] : [])) as { time: number; value: string }[];
+      "SELECT time, value FROM spo2 WHERE deleted=0 ORDER BY time"
+    ).all() as { time: number; value: string }[];
 
     const samples = rows.flatMap(r => {
       try {
@@ -140,12 +159,10 @@ export class SqliteMiFitnessStrategy {
     );
   }
 
-  private async importSteps(db: Database.Database, userId: string, onProgress: ProgressCallback, afterTs?: Date): Promise<number> {
+  private async importSteps(db: Database.Database, userId: string, onProgress: ProgressCallback): Promise<number> {
     const rows = db.prepare(
-      afterTs
-        ? "SELECT time, value FROM steps WHERE deleted=0 AND time > ? ORDER BY time"
-        : "SELECT time, value FROM steps WHERE deleted=0 ORDER BY time"
-    ).all(...(afterTs ? [Math.floor(afterTs.getTime() / 1000)] : [])) as { time: number; value: string }[];
+      "SELECT time, value FROM steps WHERE deleted=0 ORDER BY time"
+    ).all() as { time: number; value: string }[];
 
     const samples = rows.flatMap(r => {
       try {
@@ -162,14 +179,12 @@ export class SqliteMiFitnessStrategy {
     );
   }
 
-  private async importSleep(db: Database.Database, userId: string, onProgress: ProgressCallback, afterTs?: Date): Promise<number> {
+  private async importSleep(db: Database.Database, userId: string, onProgress: ProgressCallback): Promise<number> {
     const rows = db.prepare(
-      afterTs
-        ? "SELECT time, value FROM sleep WHERE deleted=0 AND time > ? ORDER BY time"
-        : "SELECT time, value FROM sleep WHERE deleted=0 ORDER BY time"
-    ).all(...(afterTs ? [Math.floor(afterTs.getTime() / 1000)] : [])) as { time: number; value: string }[];
+      "SELECT time, value FROM sleep WHERE deleted=0 ORDER BY time"
+    ).all() as { time: number; value: string }[];
 
-    const rawRecords = rows.flatMap(r => {
+    const rawRecords: SleepRec[] = rows.flatMap(r => {
       try {
         const v = JSON.parse(r.value) as SleepJson;
         const bedtime = v.bedtime ?? r.time;
@@ -200,17 +215,18 @@ export class SqliteMiFitnessStrategy {
       } catch { return []; }
     });
 
-    // Deduplicate: for the same bedtime timestamp keep the record with most data.
-    // If two records have the same calendar date (within 2h), merge them.
-    const byKey = new Map<number, typeof rawRecords[number]>();
-    for (const rec of rawRecords) {
-      // Round bedtime to the nearest day (UTC midnight) as dedup key
+    // Separate naps (< NAP_MAX_MIN) from main sleep records
+    const napRecs  = rawRecords.filter(r => r.durationMin != null && r.durationMin < NAP_MAX_MIN);
+    const mainRecs = rawRecords.filter(r => r.durationMin == null || r.durationMin >= NAP_MAX_MIN);
+
+    // Dedup main sleep by calendar UTC day; merge if two records fall on the same day
+    const byKey = new Map<number, SleepRec>();
+    for (const rec of mainRecs) {
       const dayKey = Math.floor(rec.bedtime.getTime() / 1000 / 86400);
       const existing = byKey.get(dayKey);
       if (!existing) {
-        byKey.set(dayKey, rec);
+        byKey.set(dayKey, { ...rec });
       } else {
-        // Merge: prefer non-null fields; prefer longer duration for numeric fields
         const merged = { ...existing };
         const fields = ["durationMin","deepMin","lightMin","remMin","awakeMin","awakeCount","avgHr","minHr","maxHr","score","avgBreath"] as const;
         for (const f of fields) {
@@ -219,7 +235,6 @@ export class SqliteMiFitnessStrategy {
           }
         }
         if (!merged.stages && rec.stages) merged.stages = rec.stages;
-        // Use the record with the longer duration as the bedtime/wakeUp anchor
         if ((rec.durationMin ?? 0) > (existing.durationMin ?? 0)) {
           merged.bedtime = rec.bedtime;
           merged.wakeUp  = rec.wakeUp;
@@ -227,7 +242,38 @@ export class SqliteMiFitnessStrategy {
         byKey.set(dayKey, merged);
       }
     }
-    const records = Array.from(byKey.values());
+
+    // Attach each nap to the main sleep of the same or previous UTC day
+    const standaloneNaps: SleepRec[] = [];
+    for (const nap of napRecs) {
+      const napDayKey = Math.floor(nap.bedtime.getTime() / 1000 / 86400);
+      const main = byKey.get(napDayKey) ?? byKey.get(napDayKey - 1);
+      const napEntry: NapEntry = {
+        start: Math.floor(nap.bedtime.getTime() / 1000),
+        end:   Math.floor(nap.wakeUp.getTime()   / 1000),
+        durationMin: nap.durationMin,
+        deepMin:     nap.deepMin,
+        lightMin:    nap.lightMin,
+        remMin:      nap.remMin,
+        awakeMin:    nap.awakeMin,
+        stages:      nap.stages,
+      };
+      if (main) {
+        if (!main.naps) main.naps = [];
+        main.naps.push(napEntry);
+        // Include nap time in the main sleep totals for stats
+        if (nap.durationMin) main.durationMin = (main.durationMin ?? 0) + nap.durationMin;
+        if (nap.deepMin)     main.deepMin     = (main.deepMin     ?? 0) + nap.deepMin;
+        if (nap.lightMin)    main.lightMin    = (main.lightMin    ?? 0) + nap.lightMin;
+        if (nap.remMin)      main.remMin      = (main.remMin      ?? 0) + nap.remMin;
+        if (nap.awakeMin)    main.awakeMin    = (main.awakeMin    ?? 0) + nap.awakeMin;
+      } else {
+        // No corresponding night sleep found — keep as standalone record
+        standaloneNaps.push(nap);
+      }
+    }
+
+    const records = [...Array.from(byKey.values()), ...standaloneNaps];
 
     onProgress({ step: "sleep", label: "Сон", current: 0, total: records.length });
     return this.sleepService.upsertBatch(userId, records,
@@ -236,12 +282,10 @@ export class SqliteMiFitnessStrategy {
     );
   }
 
-  private async importActivities(db: Database.Database, userId: string, onProgress: ProgressCallback, afterTs?: Date): Promise<number> {
+  private async importActivities(db: Database.Database, userId: string, onProgress: ProgressCallback): Promise<number> {
     const rows = db.prepare(
-      afterTs
-        ? "SELECT sid, key, time, value FROM MIWDBSportTable WHERE deleted=0 AND time > ? ORDER BY time"
-        : "SELECT sid, key, time, value FROM MIWDBSportTable WHERE deleted=0 ORDER BY time"
-    ).all(...(afterTs ? [Math.floor(afterTs.getTime() / 1000)] : [])) as { sid: string; key: string; time: number; value: string }[];
+      "SELECT sid, key, time, value FROM MIWDBSportTable WHERE deleted=0 ORDER BY time"
+    ).all() as { sid: string; key: string; time: number; value: string }[];
 
     const activities = rows.flatMap(r => {
       try {

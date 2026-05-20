@@ -73,6 +73,28 @@ select.input { cursor: pointer; }
   border-radius: 4px; padding: 2px 8px;
 }
 
+.typeList {
+  display: flex; flex-direction: column; gap: 6px;
+  margin-bottom: 14px;
+}
+
+.typeRow {
+  display: flex; align-items: center; gap: 8px;
+  cursor: pointer; user-select: none;
+  padding: 4px 6px; border-radius: 6px;
+  transition: background .1s;
+  &:hover { background: var(--color-bg); }
+}
+
+.typeCheck {
+  width: 15px; height: 15px; cursor: pointer;
+  accent-color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.typeLabel { font-size: 13px; flex: 1; }
+.typeCount  { font-size: 12px; color: var(--color-muted); }
+
 .deleteBtn {
   padding: 7px 14px; border: 1px solid #ef4444; border-radius: var(--radius);
   background: transparent; color: #ef4444; font-size: 13px;

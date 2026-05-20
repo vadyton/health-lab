@@ -174,6 +174,48 @@ function findCsv(files: CsvFiles, folderPrefix: string): string | null {
   return null;
 }
 
+// ── Nap types & normalization ─────────────────────────────────────────────────
+
+interface NapEntry {
+  start: number;
+  end: number;
+  durationMin?: number;
+  deepMin?: number;
+  lightMin?: number;
+  remMin?: number;
+  awakeMin?: number;
+}
+
+interface ZeppNapRaw {
+  start?: string;
+  stop?: string;
+  napTime?: number;
+  deepSleepTime?: number;
+  shallowSleepTime?: number;
+  REMTime?: number;
+  wakeTime?: number;
+}
+
+function normalizeZeppNaps(raw: unknown): NapEntry[] | undefined {
+  if (!Array.isArray(raw) || !raw.length) return undefined;
+  const result: NapEntry[] = [];
+  for (const item of raw as ZeppNapRaw[]) {
+    const start = item.start ? new Date(item.start.replace(" ", "T") + "Z") : null;
+    const end   = item.stop  ? new Date(item.stop.replace(" ", "T")  + "Z") : null;
+    if (!start || !end || isNaN(start.getTime()) || isNaN(end.getTime())) continue;
+    result.push({
+      start: Math.floor(start.getTime() / 1000),
+      end:   Math.floor(end.getTime()   / 1000),
+      durationMin: item.napTime,
+      deepMin:     item.deepSleepTime,
+      lightMin:    item.shallowSleepTime,
+      remMin:      item.REMTime,
+      awakeMin:    item.wakeTime,
+    });
+  }
+  return result.length ? result : undefined;
+}
+
 // ── CSV parsing ───────────────────────────────────────────────────────────────
 
 function parseCsv(content: string): Record<string, string>[] {
@@ -381,14 +423,32 @@ export class ZeppLifeCsvStrategy {
         ? (deepMin ?? 0) + (lightMin ?? 0) + (remMin ?? 0) + (awakeMin ?? 0)
         : undefined;
 
-      let naps: unknown = undefined;
+      let naps: NapEntry[] | undefined;
       const napsRaw = row["naps"]?.trim().replace(/^"|"$/g, "").replace(/""/g, '"');
       if (napsRaw) {
-        try { naps = JSON.parse(napsRaw); } catch { /* ignore */ }
+        try { naps = normalizeZeppNaps(JSON.parse(napsRaw)); } catch { /* ignore */ }
+      }
+
+      // Include nap durations in the daily totals for stats
+      let napDurationMin = 0, napDeepMin = 0, napLightMin = 0, napRemMin = 0, napAwakeMin = 0;
+      if (naps) {
+        for (const n of naps) {
+          napDurationMin += n.durationMin ?? 0;
+          napDeepMin     += n.deepMin     ?? 0;
+          napLightMin    += n.lightMin    ?? 0;
+          napRemMin      += n.remMin      ?? 0;
+          napAwakeMin    += n.awakeMin    ?? 0;
+        }
       }
 
       records.push({
-        bedtime, wakeUp, durationMin, deepMin, lightMin, remMin, awakeMin, naps,
+        bedtime, wakeUp,
+        durationMin: durationMin != null ? durationMin + napDurationMin : undefined,
+        deepMin:  deepMin  != null ? deepMin  + napDeepMin  : undefined,
+        lightMin: lightMin != null ? lightMin + napLightMin : undefined,
+        remMin:   remMin   != null ? remMin   + napRemMin   : undefined,
+        awakeMin: awakeMin != null ? awakeMin + napAwakeMin : undefined,
+        naps,
         stages: stageMap.get(row["date"]),
       });
     }

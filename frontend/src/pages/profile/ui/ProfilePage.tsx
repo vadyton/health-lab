@@ -68,20 +68,43 @@ const SECTIONS: { title: string; fields: FieldDef[] }[] = [
 
 function fmtN(n: number) { return n.toLocaleString("ru-RU"); }
 
+const TYPE_LABELS: Record<string, string> = {
+  heartRate:  "Пульс",
+  steps:      "Шаги",
+  sleep:      "Сон",
+  activities: "Активности",
+  body:       "Состав тела",
+};
+
 function DataSourceCard({ source, stats, onDeleted }: {
   source: string;
   stats: SourceStats;
   onDeleted: () => void;
 }) {
+  const availableTypes = Object.entries(stats)
+    .filter(([, n]) => n > 0)
+    .map(([key]) => key);
+
+  const [selected,   setSelected]   = useState<Set<string>>(() => new Set(availableTypes));
   const [confirming, setConfirming] = useState(false);
   const [deleting,   setDeleting]   = useState(false);
   const [result,     setResult]     = useState<Record<string, number> | null>(null);
+
   const total = Object.values(stats).reduce((a, b) => a + b, 0);
+  const selectedCount = [...selected].reduce((s, k) => s + (stats[k as keyof SourceStats] ?? 0), 0);
+
+  const toggle = (key: string) =>
+    setSelected(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
 
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      const res = await dataManagementApi.deleteSource(source);
+      const types = [...selected].length < availableTypes.length ? [...selected] : undefined;
+      const res = await dataManagementApi.deleteSource(source, types);
       setResult(res);
       setConfirming(false);
       onDeleted();
@@ -96,26 +119,39 @@ function DataSourceCard({ source, stats, onDeleted }: {
         <span className={s.sourceName}>{SOURCE_LABELS[source] ?? source}</span>
         <span className={s.sourceTotal}>{fmtN(total)} записей</span>
       </div>
-      <div className={s.sourceCounts}>
-        {Object.entries(stats).map(([key, n]) => n > 0 && (
-          <span key={key} className={s.sourceCount}>
-            {{heartRate:"Пульс", steps:"Шаги", sleep:"Сон", activities:"Активности", body:"Состав тела"}[key] ?? key}: {fmtN(n)}
-          </span>
+
+      <div className={s.typeList}>
+        {availableTypes.map(key => (
+          <label key={key} className={s.typeRow}>
+            <input
+              type="checkbox"
+              className={s.typeCheck}
+              checked={selected.has(key)}
+              onChange={() => toggle(key)}
+            />
+            <span className={s.typeLabel}>{TYPE_LABELS[key] ?? key}</span>
+            <span className={s.typeCount}>{fmtN(stats[key as keyof SourceStats])}</span>
+          </label>
         ))}
       </div>
+
       {result && (
         <p className={s.deleteResult}>
-          Удалено: {Object.entries(result).map(([k, v]) => `${k} (${fmtN(v)})`).join(", ")}
+          Удалено: {Object.entries(result).filter(([, v]) => v > 0).map(([k, v]) => `${TYPE_LABELS[k] ?? k} (${fmtN(v)})`).join(", ")}
         </p>
       )}
-      {!confirming && !result && total > 0 && (
+
+      {!confirming && !result && selected.size > 0 && (
         <button className={s.deleteBtn} onClick={() => setConfirming(true)}>
-          Удалить все данные {SOURCE_LABELS[source] ?? source}
+          Удалить выбранное ({fmtN(selectedCount)})
         </button>
       )}
+
       {confirming && (
         <div className={s.confirmRow}>
-          <span className={s.confirmText}>Удалить {fmtN(total)} записей безвозвратно?</span>
+          <span className={s.confirmText}>
+            Удалить {fmtN(selectedCount)} записей безвозвратно?
+          </span>
           <button className={s.confirmYes} onClick={handleDelete} disabled={deleting}>
             {deleting ? "Удаляем…" : "Да, удалить"}
           </button>

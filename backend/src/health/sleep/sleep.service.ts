@@ -98,6 +98,7 @@ export class SleepService {
       awakeCount:    r.awakeCount  ?? undefined,
       avgBreath:     r.avgBreath   ?? undefined,
       stages:        r.stages,
+      naps:          r.naps ?? undefined,
     };
   }
 }

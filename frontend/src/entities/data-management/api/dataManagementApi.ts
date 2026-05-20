@@ -17,8 +17,11 @@ class DataManagementApi extends BaseApi {
   getSourceStats = () =>
     this.get<Record<string, SourceStats>>("/api/data/sources");
 
-  deleteSource = (source: string) =>
-    this.del<Record<string, number>>(`/api/data/source?source=${source}`);
+  deleteSource = (source: string, types?: string[]) => {
+    const params = new URLSearchParams({ source });
+    if (types?.length) params.set("types", types.join(","));
+    return this.del<Record<string, number>>(`/api/data/source?${params}`);
+  };
 
   exportActivities = (format: "tcx" | "fit", sources?: string[]) => {
     const params = new URLSearchParams({ format });

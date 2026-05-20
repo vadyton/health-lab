@@ -2,7 +2,7 @@ import { useMemo, useEffect, useRef } from "react";
 import { observer } from "mobx-react-lite";
 import { useStore } from "@/shared/stores/StoreContext";
 import { useSleepSummary, useSleepDetail } from "@/entities/sleep/api/queries";
-import type { SleepSummary, SleepRecord } from "@/entities/sleep/model/types";
+import type { SleepSummary, SleepRecord, Nap } from "@/entities/sleep/model/types";
 import { SleepHistoryChart, buildChartData } from "@/widgets/sleep-chart/ui/SleepHistoryChart";
 import { SleepStageBar } from "@/widgets/sleep-chart/ui/SleepChart";
 import { SleepCalendar } from "@/widgets/sleep-calendar/ui/SleepCalendar";
@@ -238,6 +238,31 @@ function StatCard({ val, label, color }: { val: string; label: string; color?: s
   );
 }
 
+function NapSection({ naps }: { naps: Nap[] }) {
+  const totalNapMin = naps.reduce((s, n) => s + (n.durationMin ?? Math.round((n.end - n.start) / 60)), 0);
+  return (
+    <div className={s.napSection}>
+      <div className={s.stagesTitle}>Дневной сон — {fmtSleepDuration(totalNapMin)}</div>
+      {naps.map((nap, i) => {
+        const durMin = nap.durationMin ?? Math.round((nap.end - nap.start) / 60);
+        return (
+          <div key={i} className={s.napItem}>
+            <span className={s.napTime}>{fmtTime(nap.start)} – {fmtTime(nap.end)}</span>
+            <span className={s.napDur}>{fmtSleepDuration(durMin)}</span>
+            {(nap.deepMin != null || nap.lightMin != null || nap.remMin != null) && (
+              <span className={s.napPhases}>
+                {nap.deepMin  != null && <span style={{ color: "#2b6cb0" }}>г {fmtSleepDuration(nap.deepMin)}</span>}
+                {nap.remMin   != null && <span style={{ color: "#805ad5" }}>rem {fmtSleepDuration(nap.remMin)}</span>}
+                {nap.lightMin != null && <span style={{ color: "#63b3ed" }}>л {fmtSleepDuration(nap.lightMin)}</span>}
+              </span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function SleepDetail({ record }: { record: SleepRecord }) {
   return (
     <div className={s.detail}>
@@ -258,9 +283,12 @@ function SleepDetail({ record }: { record: SleepRecord }) {
       </div>
       {record.stages && record.stages.length > 0 && (
         <div className={s.stages}>
-          <div className={s.stagesTitle}>Фазы сна</div>
+          <div className={s.stagesTitle}>Ночной сон — фазы</div>
           <SleepStageBar record={record} />
         </div>
+      )}
+      {record.naps && record.naps.length > 0 && (
+        <NapSection naps={record.naps} />
       )}
     </div>
   );

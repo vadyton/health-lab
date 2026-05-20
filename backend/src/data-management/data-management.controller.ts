@@ -16,11 +16,16 @@ export class DataManagementController {
   }
 
   @Delete("source")
-  async deleteBySource(@CurrentUser() user: CU, @Query("source") source: string) {
+  async deleteBySource(
+    @CurrentUser() user: CU,
+    @Query("source") source: string,
+    @Query("types") typesStr?: string,
+  ) {
     if (!KNOWN_SOURCES.includes(source as DataSource)) {
       throw new BadRequestException(`Unknown source: ${source}. Valid: ${KNOWN_SOURCES.join(", ")}`);
     }
-    return this.dataManagementService.deleteBySource(user.id, source as DataSource);
+    const types = typesStr ? typesStr.split(",").filter(Boolean) : undefined;
+    return this.dataManagementService.deleteBySource(user.id, source as DataSource, types);
   }
 
   @Get("export/activities")
