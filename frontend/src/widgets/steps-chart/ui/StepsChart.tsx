@@ -4,7 +4,7 @@ import {
 } from "recharts";
 import type { StepsSample } from "@/entities/steps/model/types";
 
-type Range = "day" | "week" | "month" | "year";
+type Range = "day" | "week" | "month" | "year" | "all";
 
 function fmtLabel(time: number, range: Range): string {
   const d = new Date(time * 1000);

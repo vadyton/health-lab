@@ -30,6 +30,37 @@
   background: var(--color-surface); color: var(--color-text);
 }
 
+.exportWrap { position: relative; }
+
+.exportBtn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border: 1px solid var(--color-border); border-radius: var(--radius);
+  background: var(--color-surface); color: var(--color-text); font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: background .1s; white-space: nowrap;
+}
+.exportBtn:hover { background: var(--color-bg); }
+
+.caret { font-size: 10px; color: var(--color-muted); }
+
+.exportMenu {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 100;
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius); box-shadow: var(--shadow-sm);
+  display: flex; flex-direction: column; min-width: 240px; overflow: hidden;
+}
+
+.exportItem {
+  display: flex; flex-direction: column; align-items: flex-start;
+  padding: 10px 14px; border: none; background: none; cursor: pointer;
+  text-align: left; transition: background .1s;
+  border-bottom: 1px solid var(--color-border);
+}
+.exportItem:last-child { border-bottom: none; }
+.exportItem:hover { background: var(--color-bg); }
+
+.exportItemTitle { font-size: 13px; font-weight: 600; color: var(--color-text); }
+.exportItemDesc  { font-size: 11px; color: var(--color-muted); margin-top: 2px; }
+
 .compareBtn {
   margin-left: auto;
   padding: 7px 14px; border: 1px solid var(--color-border);

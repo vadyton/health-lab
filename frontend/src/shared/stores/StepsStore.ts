@@ -1,8 +1,9 @@
 import { makeAutoObservable, computed } from "mobx";
 
-type Range = "day" | "week" | "month" | "year";
+export type Range = "day" | "week" | "month" | "year" | "all";
 
 function shift(date: string, range: Range, dir: -1 | 1): string {
+  if (range === "all") return date;
   const d = new Date(date + "T12:00:00Z");
   switch (range) {
     case "day":   d.setUTCDate(d.getUTCDate() + dir);           break;
@@ -31,6 +32,7 @@ export class StepsStore {
   }
 
   get canGoForward(): boolean {
+    if (this.range === "all") return false;
     return shift(this.date, this.range, 1) <= this.today;
   }
 

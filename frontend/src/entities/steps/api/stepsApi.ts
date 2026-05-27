@@ -2,7 +2,7 @@ import { BaseApi } from "@/shared/api/BaseApi";
 import type { StepsResponse } from "../model/types";
 
 class StepsApi extends BaseApi {
-  query = (date: string, range: "day" | "week" | "month" | "year") =>
+  query = (date: string, range: "day" | "week" | "month" | "year" | "all") =>
     this.get<StepsResponse>(`/api/steps?date=${date}&range=${range}`);
 }
 

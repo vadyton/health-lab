@@ -1,13 +1,28 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 
-type Range = "day" | "week" | "month" | "year";
+type Range = "day" | "week" | "month" | "year" | "all";
 
 @Injectable()
 export class StepsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getForRange(userId: string, date: string, range: Range) {
+    if (range === "all") {
+      const rows = await this.getAllDailySummaries(userId);
+      const samples = rows.map(r => ({
+        time:     Math.floor(new Date(r.date + "T00:00:00Z").getTime() / 1000),
+        steps:    r.steps,
+        distance: r.distance,
+        calories: r.calories,
+      }));
+      const total    = samples.reduce((s, r) => s + r.steps, 0);
+      const distance = samples.reduce((s, r) => s + r.distance, 0);
+      const calories = samples.reduce((s, r) => s + r.calories, 0);
+      const availableDates = await this.availableDates(userId);
+      return { samples, total, distance, calories, goal: undefined, availableDates };
+    }
+
     const end = new Date(date + "T23:59:59Z");
     const start = new Date(end);
     if (range === "day")   start.setUTCHours(0, 0, 0, 0);
@@ -74,6 +89,26 @@ export class StepsService {
 
     const availableDates = await this.availableDates(userId);
     return { samples, total, distance, calories, goal: 10000, availableDates };
+  }
+
+  async getAllDailySummaries(userId: string): Promise<{ date: string; steps: number; distance: number; calories: number }[]> {
+    const rows = await this.prisma.$queryRaw<{ day: Date; steps: bigint; distance: number; calories: number }[]>`
+      SELECT
+        DATE_TRUNC('day', ts) AS day,
+        SUM(steps)::bigint AS steps,
+        COALESCE(SUM("distanceM"), 0) AS distance,
+        COALESCE(SUM(calories),   0) AS calories
+      FROM "Step"
+      WHERE "userId" = ${userId}::uuid
+      GROUP BY 1
+      ORDER BY 1
+    `;
+    return rows.map(r => ({
+      date:     new Date(r.day).toISOString().slice(0, 10),
+      steps:    Number(r.steps),
+      distance: Number(r.distance),
+      calories: Number(r.calories),
+    }));
   }
 
   async availableDates(userId: string): Promise<string[]> {
