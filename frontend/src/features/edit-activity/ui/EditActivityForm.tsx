@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import type { Activity, ActivityFileEdit } from "@/entities/activity/model/types";
 import { activitiesApi } from "@/entities/activity/api/activitiesApi";
 import { SPORT_OPTIONS } from "@/shared/lib/sportOptions";
+import { TrimSlider } from "./TrimSlider";
 import s from "./EditActivityForm.module.scss";
 
 interface Props {
   activity: Activity;
   onSaved: (updated: Activity) => void;
+  onNeedsRefetch?: () => void;
 }
 
 type Status = "idle" | "saving" | "done" | "error";
@@ -69,7 +71,7 @@ const mToKm   = (m?: number | null)  => (m != null && m > 0) ? (m / 1000).toFixe
 const msToKmh = (ms?: number | null) => (ms != null && ms > 0) ? (ms * 3.6).toFixed(2) : "";
 const numStr  = (v?: number | null)  => (v != null && v > 0) ? String(v) : "";
 
-export function EditActivityForm({ activity, onSaved }: Props) {
+export function EditActivityForm({ activity, onSaved, onNeedsRefetch }: Props) {
   const ov = activity.overrides ?? {};
 
   const [sport,        setSport]        = useState(ov.sport        ?? activity.categoryOriginal);
@@ -104,6 +106,20 @@ export function EditActivityForm({ activity, onSaved }: Props) {
   // VO2 Max
   const [vo2Max, setVo2Max] = useState(numStr(ov.vo2Max ?? activity.vo2Max));
 
+  const origDuration = activity.end - activity.start;
+  const [startOff, setStartOff] = useState(() => {
+    if (ov.startTime != null) return ov.startTime - activity.start;
+    return 0;
+  });
+  const [endOff, setEndOff] = useState(() => {
+    if (ov.endTime != null) return ov.endTime - activity.end;
+    return 0;
+  });
+  const handleTrimChange = useCallback((s: number, e: number) => {
+    setStartOff(s);
+    setEndOff(e);
+  }, []);
+
   const [status, setStatus] = useState<Status>("idle");
   const [errMsg, setErrMsg] = useState("");
   const [hasTcx, setHasTcx] = useState(activity.hasTcx ?? false);
@@ -124,10 +140,14 @@ export function EditActivityForm({ activity, onSaved }: Props) {
     setStatus("saving");
     setErrMsg("");
     try {
+      const newStart = startOff !== 0 ? activity.start + startOff : undefined;
+      const newEnd   = endOff   !== 0 ? activity.end   + endOff   : undefined;
       const patch: ActivityFileEdit = {
         sport:        sport !== activity.categoryOriginal ? sport : undefined,
         title:        title   || undefined,
         notes:        notes   || undefined,
+        startTime:    newStart,
+        endTime:      newEnd,
         calories:     num(calories),
         avgHr:        num(avgHr),
         maxHr:        num(maxHr),
@@ -151,11 +171,16 @@ export function EditActivityForm({ activity, onSaved }: Props) {
       setHasFit(result.hasFit);
       setStatus("done");
 
+      const savedStart    = patch.startTime ?? activity.start;
+      const savedEnd      = patch.endTime   ?? activity.end;
       onSaved({
         ...activity,
         category:     patch.sport ?? activity.category,
         title:        patch.title,
         notes:        patch.notes,
+        start:        savedStart,
+        end:          savedEnd,
+        duration:     savedEnd - savedStart,
         calories:     patch.calories     ?? activity.calories,
         avgHr:        patch.avgHr        ?? activity.avgHr,
         maxHr:        patch.maxHr        ?? activity.maxHr,
@@ -176,6 +201,11 @@ export function EditActivityForm({ activity, onSaved }: Props) {
         hasFit:       result.hasFit,
         overrides:    patch,
       });
+
+      // HR/GPS samples are trimmed server-side — need a full refetch to reflect them
+      if (patch.startTime != null || patch.endTime != null) {
+        onNeedsRefetch?.();
+      }
 
       setTimeout(() => setStatus("idle"), 3000);
     } catch (e: unknown) {
@@ -209,6 +239,16 @@ export function EditActivityForm({ activity, onSaved }: Props) {
         <label className={s.label}>Заметки</label>
         <textarea className={s.textarea} value={notes} rows={2}
           onChange={(e) => setNotes(e.target.value)} placeholder="Описание тренировки…" />
+      </div>
+
+      <div className={s.field}>
+        <label className={s.label}>Обрезать тренировку</label>
+        <TrimSlider
+          totalSec={origDuration}
+          startOff={startOff}
+          endOff={endOff}
+          onChange={handleTrimChange}
+        />
       </div>
 
       {/* ── Метрики ──────────────────────────────────────────────── */}

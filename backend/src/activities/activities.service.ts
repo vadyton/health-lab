@@ -202,14 +202,27 @@ export class ActivitiesService {
     maxPower?: number;
     totalAscent?: number;
     totalDescent?: number;
+    startTime?: number; // unix seconds — trim workout start
+    endTime?: number;   // unix seconds — trim workout end
   }) {
+    const actId = BigInt(id);
     const existing = await this.prisma.activity.findFirst({
-      where: { userId, id: BigInt(id) },
-      select: { extra: true },
+      where: { userId, id: actId },
+      select: { extra: true, startTs: true, endTs: true },
     });
     if (!existing) throw new NotFoundException();
 
-    const { sport, avgSpeed, maxSpeed, avgCadence, maxCadence, avgPower, maxPower, totalAscent, totalDescent, ...schemaFields } = data;
+    const { sport, avgSpeed, maxSpeed, avgCadence, maxCadence, avgPower, maxPower,
+            totalAscent, totalDescent, startTime, endTime, ...schemaFields } = data;
+
+    const origStartSec = Math.floor(existing.startTs.getTime() / 1000);
+    const origEndSec   = Math.floor(existing.endTs.getTime()   / 1000);
+
+    const newStartSec = startTime ?? origStartSec;
+    const newEndSec   = endTime   ?? origEndSec;
+
+    if (newStartSec >= newEndSec)
+      throw new BadRequestException("startTime must be before endTime");
 
     const prevExtra = (existing.extra as Record<string, unknown>) ?? {};
     const extraPatch: Record<string, unknown> = {};
@@ -228,10 +241,58 @@ export class ActivitiesService {
       prismaData.extra = { ...prevExtra, ...extraPatch };
     }
 
-    await this.prisma.activity.updateMany({
-      where: { userId, id: BigInt(id) },
-      data: prismaData as any,
+    const trimming = newStartSec !== origStartSec || newEndSec !== origEndSec;
+    if (trimming) {
+      prismaData.startTs  = new Date(newStartSec * 1000);
+      prismaData.endTs    = new Date(newEndSec   * 1000);
+      prismaData.durationS = newEndSec - newStartSec;
+    }
+
+    // Use a transaction so activity + HR/GPS are always consistent
+    await this.prisma.$transaction(async (tx) => {
+      await tx.activity.updateMany({
+        where: { userId, id: actId },
+        data: prismaData as any,
+      });
+
+      if (trimming) {
+        // Trim HR samples: delete outside [newStart, newEnd]
+        await tx.activityHr.deleteMany({
+          where: {
+            activityId: actId,
+            OR: [
+              { ts: { lt: new Date(newStartSec * 1000) } },
+              { ts: { gt: new Date(newEndSec   * 1000) } },
+            ],
+          },
+        });
+
+        // Trim GPS points: delete outside [newStart, newEnd], then renumber idx
+        await tx.activityGps.deleteMany({
+          where: {
+            activityId: actId,
+            OR: [
+              { ts: { lt: newStartSec } },
+              { ts: { gt: newEndSec   } },
+            ],
+          },
+        });
+
+        // Renumber GPS idx to keep them sequential
+        const remaining = await tx.activityGps.findMany({
+          where: { activityId: actId },
+          orderBy: { ts: "asc" },
+          select: { ts: true, lat: true, lng: true, altM: true },
+        });
+        if (remaining.length > 0) {
+          await tx.activityGps.deleteMany({ where: { activityId: actId } });
+          await tx.activityGps.createMany({
+            data: remaining.map((p, idx) => ({ activityId: actId, idx, ...p })),
+          });
+        }
+      }
     });
+
     this.invalidateCache(userId);
     return { ok: true, hasTcx: true, hasFit: true };
   }

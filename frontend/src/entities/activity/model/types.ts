@@ -38,6 +38,8 @@ export interface ActivityOverrides {
   maxPower?: number;   // watts
   totalAscent?: number;
   totalDescent?: number;
+  startTime?: number;  // unix seconds — trimmed start
+  endTime?: number;    // unix seconds — trimmed end
 }
 
 export type ActivityFileEdit = ActivityOverrides;

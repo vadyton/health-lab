@@ -45,7 +45,7 @@ export function ActivityPage() {
   const [attachingHr, setAttachingHr] = useState(false);
   const [attachHrMsg, setAttachHrMsg] = useState("");
 
-  const { data: activity, isLoading, error, setData } = useActivityDetailWithSetter(id!);
+  const { data: activity, isLoading, error, setData, refetch } = useActivityDetailWithSetter(id!);
 
   const handleDelete = async () => {
     if (!id) return;
@@ -270,7 +270,11 @@ export function ActivityPage() {
       <section className={s.section}>
         <h2 className={s.sectionTitle}>Редактировать</h2>
         <div className={s.card}>
-          <EditActivityForm activity={activity} onSaved={updated => setData(updated)} />
+          <EditActivityForm
+            activity={activity}
+            onSaved={updated => setData(updated)}
+            onNeedsRefetch={() => refetch()}
+          />
         </div>
       </section>
 
@@ -301,5 +305,5 @@ function useActivityDetailWithSetter(id: string) {
     queryClient.setQueryData<Activity>(qk.activities.detail(id), updater as any);
   };
 
-  return { ...query, setData };
+  return { ...query, setData, refetch: query.refetch };
 }
