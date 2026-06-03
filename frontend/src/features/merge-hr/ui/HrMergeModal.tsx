@@ -76,7 +76,7 @@ export function HrMergeModal({
     setStatus("saving");
     setErrMsg("");
     try {
-      await activitiesApi.mergeHr(activityId, strategy, externalSamples);
+      await activitiesApi.mergeHr(activityId, strategy, merged);
       setStatus("done");
       onApplied(stats.avg, stats.max);
       setTimeout(onClose, 1200);

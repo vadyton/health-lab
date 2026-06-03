@@ -10,6 +10,7 @@ import { StepsPage } from "@/pages/steps/ui/StepsPage";
 import { SleepPage } from "@/pages/sleep/ui/SleepPage";
 import { ProfilePage } from "@/pages/profile/ui/ProfilePage";
 import { ImportPage } from "@/pages/import/ui/ImportPage";
+import { FileViewerPage } from "@/pages/file-viewer/ui/FileViewerPage";
 import { AuthPage } from "@/pages/auth/ui/AuthPage";
 import "./styles/global.scss";
 
@@ -32,6 +33,7 @@ export const App = observer(() => {
         <Route path="/sleep" element={<SleepPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/import" element={<ImportPage />} />
+        <Route path="/file-viewer" element={<FileViewerPage />} />
       </Routes>
     </BrowserRouter>
   );

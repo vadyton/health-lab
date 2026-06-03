@@ -14,8 +14,9 @@ const MAIN_LINKS = [
 ];
 
 const RIGHT_LINKS = [
-  { to: "/profile", label: "Профиль", icon: "👤" },
-  { to: "/import",  label: "Импорт",  icon: "⬆️" },
+  { to: "/profile",     label: "Профиль",   icon: "👤" },
+  { to: "/file-viewer", label: "Просмотр",  icon: "📂" },
+  { to: "/import",      label: "Импорт",    icon: "⬆️" },
 ];
 
 const ALL_LINKS = [...MAIN_LINKS, ...RIGHT_LINKS];

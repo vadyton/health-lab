@@ -3,6 +3,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { ExportService, ActivityExportData } from "../export/export.service";
 import { GpsPoint, RouteStats, calcRouteStats } from "./route-calculator";
 import { parseGpx } from "./gpx.parser";
+import { parseFit, parseTcx } from "../import/fit-tcx.parser";
 
 export interface ActivitySummary {
   id: string;
@@ -174,6 +175,26 @@ export class ActivitiesService {
 
     const { stats } = await this.updateRoute(userId, id, points);
     return { ok: true, count: points.length, stats };
+  }
+
+  async uploadExternalHr(userId: string, id: string, buffer: Buffer, filename: string): Promise<{ samples: { time: number; bpm: number }[]; count: number }> {
+    const exists = await this.prisma.activity.findFirst({ where: { userId, id: BigInt(id) }, select: { id: true } });
+    if (!exists) throw new NotFoundException();
+
+    const lower = filename.toLowerCase();
+    let parsed: ReturnType<typeof parseTcx> | null = null;
+    if (lower.endsWith(".fit")) {
+      parsed = parseFit(buffer);
+    } else {
+      parsed = parseTcx(buffer.toString("utf-8"));
+    }
+
+    if (!parsed || parsed.hrSamples.length === 0) {
+      throw new BadRequestException("Файл не содержит данных пульса");
+    }
+
+    const samples = parsed.hrSamples.map(s => ({ time: Math.round(s.ts.getTime() / 1000), bpm: s.bpm }));
+    return { samples, count: samples.length };
   }
 
   async update(userId: string, id: string, data: { title?: string; notes?: string }) {
@@ -409,6 +430,36 @@ export class ActivitiesService {
       maxHr,
       samples: rows.map(r => ({ time: Math.floor(r.ts.getTime() / 1000), bpm: r.bpm })),
     };
+  }
+
+  async mergeHr(
+    userId: string,
+    id: string,
+    samples: { time: number; bpm: number }[],
+  ): Promise<{ ok: boolean; avgHr: number; maxHr: number }> {
+    const exists = await this.prisma.activity.findFirst({ where: { userId, id: BigInt(id) }, select: { id: true } });
+    if (!exists) throw new NotFoundException();
+
+    if (samples.length === 0) throw new BadRequestException("Нет сэмплов для сохранения");
+
+    await this.prisma.activityHr.deleteMany({ where: { activityId: BigInt(id) } });
+    await this.prisma.activityHr.createMany({
+      data: samples.map(s => ({ activityId: BigInt(id), ts: new Date(s.time * 1000), bpm: s.bpm })),
+      skipDuplicates: true,
+    });
+
+    const agg = await this.prisma.activityHr.aggregate({
+      where: { activityId: BigInt(id) },
+      _avg: { bpm: true },
+      _max: { bpm: true },
+    });
+
+    const avgHr = Math.round(agg._avg.bpm ?? 0);
+    const maxHr = Math.round(agg._max.bpm ?? 0);
+
+    await this.prisma.activity.updateMany({ where: { userId, id: BigInt(id) }, data: { avgHr, maxHr } });
+    this.invalidateCache(userId);
+    return { ok: true, avgHr, maxHr };
   }
 
   /** Returns max timestamps already in DB for each import type — used to skip re-importing old data. */

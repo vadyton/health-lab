@@ -54,9 +54,24 @@ export class ActivitiesController {
     res.send(data);
   }
 
+  @Post(":id/merge-hr")
+  async mergeHr(
+    @CurrentUser() user: CU,
+    @Param("id") id: string,
+    @Body() body: { strategy: string; externalSamples: { time: number; bpm: number }[] },
+  ) {
+    return this.activitiesService.mergeHr(user.id, id, body.externalSamples ?? []);
+  }
+
   @Post(":id/attach-hr-from-db")
   async attachHrFromDb(@CurrentUser() user: CU, @Param("id") id: string) {
     return this.activitiesService.attachHrFromDb(user.id, id);
+  }
+
+  @Post(":id/external-hr")
+  @UseInterceptors(FileInterceptor("file", { storage: memoryStorage() }))
+  async uploadExternalHr(@CurrentUser() user: CU, @Param("id") id: string, @UploadedFile() file: Express.Multer.File) {
+    return this.activitiesService.uploadExternalHr(user.id, id, file.buffer, file.originalname);
   }
 
   @Post(":id/import-gpx")

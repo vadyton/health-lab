@@ -9,11 +9,51 @@ import { ImportService } from "./import.service";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { CurrentUser } from "../auth/current-user.decorator";
 import type { CurrentUser as CU } from "../auth/current-user.decorator";
+import { parseFit, parseTcx } from "./fit-tcx.parser";
+import { parseGpx } from "../activities/gpx.parser";
 
 @UseGuards(JwtAuthGuard)
 @Controller("api/import")
 export class ImportController {
   constructor(private readonly importService: ImportService) {}
+
+  @Post("parse-file")
+  @HttpCode(200)
+  @UseInterceptors(FileInterceptor("file", { storage: memoryStorage() }))
+  async parseFile(@UploadedFile() file: Express.Multer.File) {
+    const lower = file.originalname.toLowerCase();
+    let hrSamples: { ts: number; bpm: number }[] = [];
+    let gpsPoints: { ts: number; lat: number; lng: number; alt?: number }[] = [];
+    let meta: Record<string, unknown> = { filename: file.originalname };
+
+    if (lower.endsWith(".gpx")) {
+      const pts = parseGpx(file.buffer.toString("utf-8"));
+      gpsPoints = pts.map(p => ({ ts: p.ts, lat: p.lat, lng: p.lng, alt: p.altM ?? undefined }));
+      meta.type = "gpx";
+    } else if (lower.endsWith(".tcx")) {
+      const parsed = parseTcx(file.buffer.toString("utf-8"));
+      if (parsed) {
+        hrSamples = parsed.hrSamples.map(s => ({ ts: Math.round(s.ts.getTime() / 1000), bpm: s.bpm }));
+        gpsPoints = parsed.gpsPoints.map(p => ({ ts: p.ts, lat: p.lat, lng: p.lng, alt: p.altM ?? undefined }));
+        meta = { ...meta, type: "tcx", category: parsed.category, durationS: parsed.durationS,
+          avgHr: parsed.avgHr, maxHr: parsed.maxHr, distanceM: parsed.distanceM,
+          calories: parsed.calories, startTs: parsed.startTs };
+      }
+    } else if (lower.endsWith(".fit")) {
+      const parsed = parseFit(file.buffer);
+      if (parsed) {
+        hrSamples = parsed.hrSamples.map(s => ({ ts: Math.round(s.ts.getTime() / 1000), bpm: s.bpm }));
+        gpsPoints = parsed.gpsPoints.map(p => ({ ts: p.ts, lat: p.lat, lng: p.lng, alt: p.altM ?? undefined }));
+        meta = { ...meta, type: "fit", category: parsed.category, durationS: parsed.durationS,
+          avgHr: parsed.avgHr, maxHr: parsed.maxHr, distanceM: parsed.distanceM,
+          calories: parsed.calories, startTs: parsed.startTs };
+      }
+    } else {
+      return { error: "Неподдерживаемый формат. Используйте .fit, .tcx или .gpx" };
+    }
+
+    return { hrSamples, gpsPoints, meta };
+  }
 
   @Post("upload-fit-tcx")
   @HttpCode(200)

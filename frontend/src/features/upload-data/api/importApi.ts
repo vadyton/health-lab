@@ -43,6 +43,18 @@ class ImportApi extends BaseApi {
     return this.streamForm("/api/import/zepp-zip", form, onMessage as (d: object) => void);
   };
 
+  /** Parse FIT / TCX / GPX without importing — returns HR + GPS data for preview */
+  parseFile = (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return this.postForm<{
+      hrSamples: { ts: number; bpm: number }[];
+      gpsPoints: { ts: number; lat: number; lng: number; alt?: number }[];
+      meta: Record<string, unknown>;
+      error?: string;
+    }>("/api/import/parse-file", form);
+  };
+
   /** Upload raw CSV store files */
   uploadStoreCsv = (files: File[]) => {
     const form = new FormData();
