@@ -4,6 +4,7 @@ import { useStore } from "@/shared/stores/StoreContext";
 import { Navbar } from "@/widgets/navbar/ui/Navbar";
 import { DashboardPage } from "@/pages/dashboard/ui/DashboardPage";
 import { ActivityPage } from "@/pages/activity/ui/ActivityPage";
+import { AddActivityPage } from "@/pages/add-activity/ui/AddActivityPage";
 import { HeartRatePage } from "@/pages/heart-rate/ui/HeartRatePage";
 import { BodyPage } from "@/pages/body/ui/BodyPage";
 import { StepsPage } from "@/pages/steps/ui/StepsPage";
@@ -26,6 +27,7 @@ export const App = observer(() => {
       <Navbar />
       <Routes>
         <Route path="/" element={<DashboardPage />} />
+        <Route path="/activity/new" element={<AddActivityPage />} />
         <Route path="/activity/:id" element={<ActivityPage />} />
         <Route path="/heart-rate" element={<HeartRatePage />} />
         <Route path="/body" element={<BodyPage />} />

@@ -1,5 +1,5 @@
 import { BaseApi } from "@/shared/api/BaseApi";
-import type { Activity, ActivitySummary, ActivityFileEdit, GpsPoint } from "../model/types";
+import type { Activity, ActivitySummary, ActivityFileEdit, ActivityCreateRequest, GpsPoint } from "../model/types";
 import type { HrSample } from "@/features/merge-hr/model/hrMergeLogic";
 
 class ActivitiesApi extends BaseApi {
@@ -8,6 +8,9 @@ class ActivitiesApi extends BaseApi {
     if (source) params.set("source", source);
     return this.get<{ total: number; items: Activity[] }>(`/api/activities?${params}`);
   };
+
+  create = (data: ActivityCreateRequest) =>
+    this.post<Activity>(`/api/activities`, data);
 
   summary = () =>
     this.get<ActivitySummary[]>("/api/activities/summary");

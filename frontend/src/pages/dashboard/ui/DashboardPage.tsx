@@ -1,5 +1,6 @@
 import { useMemo, useEffect, useRef, useState } from "react";
 import { observer } from "mobx-react-lite";
+import { useNavigate } from "react-router-dom";
 import { useStore } from "@/shared/stores/StoreContext";
 import { useActivitiesSummary, useActivitiesList } from "@/entities/activity/api/queries";
 import { ActivityCalendar } from "@/widgets/activity-calendar/ui/ActivityCalendar";
@@ -111,6 +112,7 @@ function ExportButton() {
 
 export const DashboardPage = observer(() => {
   const { dashboard } = useStore();
+  const navigate = useNavigate();
 
   const { data: summary = [], isLoading: sumLoading } = useActivitiesSummary();
   const {
@@ -155,6 +157,7 @@ export const DashboardPage = observer(() => {
             × {dashboard.filterDate}
           </button>
         )}
+        <button className={s.addBtn} onClick={() => navigate("/activity/new")}>+ Добавить</button>
         {total > 0 && <ExportButton />}
       </div>
 

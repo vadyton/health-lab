@@ -44,6 +44,30 @@ export interface ActivityOverrides {
 
 export type ActivityFileEdit = ActivityOverrides;
 
+export interface ActivityCreateRequest {
+  sport: string;
+  title?: string;
+  notes?: string;
+  startTime: number; // unix seconds
+  endTime: number;   // unix seconds
+  calories?: number;
+  avgHr?: number;
+  maxHr?: number;
+  trainLoad?: number;
+  trainEffect?: number;
+  recoverTime?: number;
+  distanceM?: number;
+  vo2Max?: number;
+  avgSpeed?: number;   // m/s
+  maxSpeed?: number;   // m/s
+  avgCadence?: number;
+  maxCadence?: number;
+  avgPower?: number;   // watts
+  maxPower?: number;   // watts
+  totalAscent?: number;
+  totalDescent?: number;
+}
+
 export interface ActivitySummary {
   id: string;
   category: string;

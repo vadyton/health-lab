@@ -12,6 +12,11 @@ import type { CurrentUser as CU } from "../auth/current-user.decorator";
 export class ActivitiesController {
   constructor(private readonly activitiesService: ActivitiesService) {}
 
+  @Post()
+  async create(@CurrentUser() user: CU, @Body() body: Record<string, unknown>) {
+    return this.activitiesService.create(user.id, body as any);
+  }
+
   @Get("summary")
   async findAllSummary(@CurrentUser() user: CU) {
     return this.activitiesService.findAllSummary(user.id);

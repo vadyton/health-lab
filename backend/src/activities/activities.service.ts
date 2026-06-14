@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException, ConflictException } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { ExportService, ActivityExportData } from "../export/export.service";
 import { GpsPoint, RouteStats, calcRouteStats } from "./route-calculator";
@@ -318,6 +319,70 @@ export class ActivitiesService {
     return { ok: true, hasTcx: true, hasFit: true };
   }
 
+  async create(userId: string, data: {
+    sport: string;
+    title?: string;
+    notes?: string;
+    startTime: number; // unix seconds
+    endTime: number;   // unix seconds
+    calories?: number;
+    avgHr?: number;
+    maxHr?: number;
+    trainLoad?: number;
+    trainEffect?: number;
+    recoverTime?: number;
+    distanceM?: number;
+    vo2Max?: number;
+    avgSpeed?: number;
+    maxSpeed?: number;
+    avgCadence?: number;
+    maxCadence?: number;
+    avgPower?: number;
+    maxPower?: number;
+    totalAscent?: number;
+    totalDescent?: number;
+  }) {
+    const { sport, startTime, endTime, avgSpeed, maxSpeed, avgCadence, maxCadence,
+            avgPower, maxPower, totalAscent, totalDescent, ...rest } = data;
+
+    if (startTime >= endTime)
+      throw new BadRequestException("startTime must be before endTime");
+
+    const extra: Record<string, unknown> = {};
+    if (avgSpeed     !== undefined) extra.avgSpeed     = avgSpeed;
+    if (maxSpeed     !== undefined) extra.maxSpeed     = maxSpeed;
+    if (avgCadence   !== undefined) extra.avgCadence   = avgCadence;
+    if (maxCadence   !== undefined) extra.maxCadence   = maxCadence;
+    if (avgPower     !== undefined) extra.avgPower     = avgPower;
+    if (maxPower     !== undefined) extra.maxPower     = maxPower;
+    if (totalAscent  !== undefined) extra.totalAscent  = totalAscent;
+    if (totalDescent !== undefined) extra.totalDescent = totalDescent;
+
+    let activity;
+    try {
+      activity = await this.prisma.activity.create({
+        data: {
+          userId,
+          category: sport,
+          source: "manual",
+          startTs: new Date(startTime * 1000),
+          endTs: new Date(endTime * 1000),
+          durationS: endTime - startTime,
+          ...rest,
+          extra: Object.keys(extra).length > 0 ? (extra as any) : undefined,
+        },
+      });
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+        throw new ConflictException("Активность с таким временем начала уже существует");
+      }
+      throw e;
+    }
+
+    this.invalidateCache(userId);
+    return this.toDto({ ...activity, hrSamples: [], gpsPoints: [] });
+  }
+
   async remove(userId: string, id: string) {
     await this.prisma.activity.deleteMany({ where: { userId, id: BigInt(id) } });
     this.invalidateCache(userId);
@@ -516,6 +581,23 @@ export class ActivitiesService {
       WHERE a."userId" = ${userId}::uuid
       ON CONFLICT ("activityId", "ts") DO NOTHING
     `;
+
+    // Fill in avg/max HR for activities that don't have it yet (e.g. manually created),
+    // without overriding values already reported by a device.
+    await this.prisma.$executeRaw`
+      UPDATE "Activity" a
+      SET "avgHr" = sub.avg_hr, "maxHr" = sub.max_hr
+      FROM (
+        SELECT "activityId", ROUND(AVG(bpm)) AS avg_hr, MAX(bpm) AS max_hr
+        FROM "ActivityHr"
+        GROUP BY "activityId"
+      ) sub
+      WHERE a.id = sub."activityId"
+        AND a."userId" = ${userId}::uuid
+        AND (a."avgHr" IS NULL OR a."avgHr" = 0)
+    `;
+
+    this.invalidateCache(userId);
     return Number(result);
   }
 

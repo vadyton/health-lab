@@ -89,7 +89,16 @@
   .statsRow { grid-template-columns: 1fr; }
 }
 
-.exportWrap { position: relative; margin-left: auto; }
+.addBtn {
+  margin-left: auto;
+  padding: 7px 14px; border: none;
+  border-radius: var(--radius); background: var(--color-accent); color: #fff;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: background .12s;
+}
+.addBtn:hover { background: var(--color-accent-dark); }
+
+.exportWrap { position: relative; }
 
 .exportBtn {
   padding: 7px 14px; border: 1px solid var(--color-border);
